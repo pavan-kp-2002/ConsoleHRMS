@@ -14,7 +14,7 @@ public class UserController {
         return authenticationService.signUp(user);
     }
 
-    public boolean handleLogin(String email, String password) {
-        return authenticationService.login(email, password);
+    public User handleLogin(String email, String password) {
+        return authenticationService.loginAndGetUser(email, password);
     }
 }
