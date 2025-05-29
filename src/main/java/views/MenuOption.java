@@ -10,7 +10,7 @@ public class MenuOption {
 
     public void showAdminMenu() {
         System.out.println("Admin Page:");
-        System.out.println("1. Approve/Reject Pending Leave Requests");
+        System.out.println("1. Approve/Reject Leave Requests");
         System.out.println("2. Update Leave Balance");
         System.out.println("3. Approved Requests list");
         System.out.println("4. Rejected Requests list");
