@@ -9,6 +9,7 @@ import views.MenuOption;
 
 import java.sql.Connection;
 import java.time.LocalDate;
+import java.util.List;
 
 public class EmployeePageController {
     private final MenuOption menuOption;
@@ -20,67 +21,69 @@ public class EmployeePageController {
     }
 
     public void runEmployeePage(String employeeEmail) {
-        boolean running = true;
-        while (running) {
-            menuOption.showEmployeeMenu();
-            String userChoice = employeePageView.getUserChoice();
-            switch (userChoice) {
-                case "1":
-                    System.out.println("Apply for Leave selected.");
-                    String startDate = employeePageView.getStartDate();
-                    String endDate = employeePageView.getEndDate(startDate);
-                    String reason = employeePageView.getReason();
-                    try (Connection conn = DatabaseConnection.getConnection()) {
-                        LeaveService leaveService = new LeaveService(conn);
-                        leaveService.applyLeave(employeeEmail, LocalDate.parse(startDate), LocalDate.parse(endDate), reason);
-                        System.out.println("Leave applied successfully and pending approval.");
-                    } catch (IllegalArgumentException e) {
-                        System.out.println(e.getMessage());
-                    } catch (Exception e) {
-                        System.out.println("Error applying leave: " + e.getMessage());
-                    }
-                    pressEnterToContinue();
-                    break;
-                case "2":
-                    System.out.println("View Leave Status selected.");
-                    try (Connection conn = DatabaseConnection.getConnection()) {
-                        LeaveService leaveService = new LeaveService(conn);
-                        java.util.List<LeaveRequest> leaves = leaveService.getAppliedLeaves(employeeEmail);
-                        if (leaves.isEmpty()) {
-                            System.out.println("No leave applications found.");
-                        } else {
-                            System.out.println("Your Leave Applications:");
-                            for (LeaveRequest req : leaves) {
-                                System.out.println("ID: " + req.getId() +
-                                        ", From: " + req.getStartDate() +
-                                        ", To: " + req.getEndDate() +
-                                        ", Status: " + req.getStatus() +
-                                        ", Reason: " + req.getReason());
-                            }
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            LeaveService leaveService = new LeaveService(conn);
+            boolean running = true;
+            while (running) {
+                menuOption.showEmployeeMenu();
+                String userChoice = employeePageView.getUserChoice();
+                switch (userChoice) {
+                    case "1":
+                        System.out.println("Apply for Leave selected.");
+                        String startDate = employeePageView.getStartDate();
+                        String endDate = employeePageView.getEndDate(startDate);
+                        String reason = employeePageView.getReason();
+                        try {
+                            leaveService.applyLeave(employeeEmail, LocalDate.parse(startDate), LocalDate.parse(endDate), reason);
+                            System.out.println("Leave applied successfully and pending approval.");
+                        } catch (IllegalArgumentException e) {
+                            System.out.println(e.getMessage());
+                        } catch (Exception e) {
+                            System.out.println("Error applying leave: " + e.getMessage());
                         }
-                    } catch (Exception e) {
-                        System.out.println("Error fetching leave status: " + e.getMessage());
-                    }
-                    pressEnterToContinue();
-                    break;
-                case "3":
-                    System.out.println("View Leave Balance selected.");
-                    try (Connection conn = DatabaseConnection.getConnection()) {
-                        LeaveService leaveService = new LeaveService(conn);
-                        int leaveBalance = leaveService.getLeaveBalance(employeeEmail);
-                        System.out.println("Balance leaves: " + leaveBalance);
-                    } catch (Exception e) {
-                        System.out.println("Error in fetching leave balance " + e.getMessage());
-                    }
-                    pressEnterToContinue();
-                    break;
-                case "4":
-                    System.out.println("Exiting Employee Menu...");
-                    running = false;
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again");
+                        pressEnterToContinue();
+                        break;
+                    case "2":
+                        System.out.println("View Leave Status selected.");
+                        try {
+                            List<LeaveRequest> leaves = leaveService.getAppliedLeaves(employeeEmail);
+                            if (leaves.isEmpty()) {
+                                System.out.println("No leave applications found.");
+                            } else {
+                                System.out.println("Your Leave Applications:");
+                                for (LeaveRequest req : leaves) {
+                                    System.out.println("ID: " + req.getId() +
+                                            ", From: " + req.getStartDate() +
+                                            ", To: " + req.getEndDate() +
+                                            ", Status: " + req.getStatus() +
+                                            ", Reason: " + req.getReason());
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.out.println("Error fetching leave status: " + e.getMessage());
+                        }
+                        pressEnterToContinue();
+                        break;
+                    case "3":
+                        System.out.println("View Leave Balance selected.");
+                        try {
+                            int leaveBalance = leaveService.getLeaveBalance(employeeEmail);
+                            System.out.println("Balance leaves: " + leaveBalance);
+                        } catch (Exception e) {
+                            System.out.println("Error in fetching leave balance " + e.getMessage());
+                        }
+                        pressEnterToContinue();
+                        break;
+                    case "4":
+                        System.out.println("Exiting Employee Menu...");
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please try again");
+                }
             }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
