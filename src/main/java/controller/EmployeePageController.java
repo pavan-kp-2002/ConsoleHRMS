@@ -1,60 +1,51 @@
-package views;
+package controller;
 
-import dao.LeaveRequestDao;
 import models.LeaveRequest;
 import service.LeaveService;
 import utils.DatabaseConnection;
-import utils.InputValidator;
 import utils.ScannerHelper;
+import views.EmployeePageView;
+import views.MenuOption;
 
 import java.sql.Connection;
 import java.time.LocalDate;
 
-public class EmployeePage {
-    private final MenuOption menuOption = new MenuOption();
+public class EmployeePageController {
+    private final MenuOption menuOption;
+    private final EmployeePageView employeePageView;
 
-    public void showEmployeeMenuAndHandleChoice(String userEmail) {
-        String choice;
-        while (true) {
+    public EmployeePageController() {
+        this.menuOption = new MenuOption();
+        this.employeePageView = new EmployeePageView();
+    }
+
+    public void runEmployeePage(String employeeEmail) {
+        boolean running = true;
+        while (running) {
             menuOption.showEmployeeMenu();
-            choice = ScannerHelper.getScanner().nextLine();
-            switch (choice) {
+            String userChoice = employeePageView.getUserChoice();
+            switch (userChoice) {
                 case "1":
                     System.out.println("Apply for Leave selected.");
-                    String startDate;
-                    do {
-                        System.out.println("Enter start date (yyyy-mm-dd): ");
-                        startDate = ScannerHelper.getScanner().nextLine();
-                        if (!InputValidator.isValidDate(startDate)) {
-                            System.out.println("Invalid date format. Try again.");
-                        }
-                    } while (!InputValidator.isValidDate(startDate));
-
-                    String endDate;
-                    do {
-                        System.out.println("Enter end date (yyyy-mm-dd): ");
-                        endDate = ScannerHelper.getScanner().nextLine();
-                        if (!InputValidator.isValidDate(endDate) || !InputValidator.isEndDateAfterStart(startDate, endDate)) {
-                            System.out.println("Invalid end date. It must be after or equal to start date and in yyyy-mm-dd format.");
-                        }
-                    } while (!InputValidator.isValidDate(endDate) || !InputValidator.isEndDateAfterStart(startDate, endDate));
-
-                    System.out.println("Enter reason: ");
-                    String reason = ScannerHelper.getScanner().nextLine();
-
+                    String startDate = employeePageView.getStartDate();
+                    String endDate = employeePageView.getEndDate(startDate);
+                    String reason = employeePageView.getReason();
                     try (Connection conn = DatabaseConnection.getConnection()) {
                         LeaveService leaveService = new LeaveService(conn);
-                        leaveService.applyLeave(userEmail, LocalDate.parse(startDate), LocalDate.parse(endDate), reason);
+                        leaveService.applyLeave(employeeEmail, LocalDate.parse(startDate), LocalDate.parse(endDate), reason);
                         System.out.println("Leave applied successfully and pending approval.");
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(e.getMessage());
                     } catch (Exception e) {
                         System.out.println("Error applying leave: " + e.getMessage());
                     }
+                    pressEnterToContinue();
                     break;
                 case "2":
                     System.out.println("View Leave Status selected.");
                     try (Connection conn = DatabaseConnection.getConnection()) {
                         LeaveService leaveService = new LeaveService(conn);
-                        java.util.List<LeaveRequest> leaves = leaveService.getAppliedLeaves(userEmail);
+                        java.util.List<LeaveRequest> leaves = leaveService.getAppliedLeaves(employeeEmail);
                         if (leaves.isEmpty()) {
                             System.out.println("No leave applications found.");
                         } else {
@@ -70,18 +61,31 @@ public class EmployeePage {
                     } catch (Exception e) {
                         System.out.println("Error fetching leave status: " + e.getMessage());
                     }
+                    pressEnterToContinue();
                     break;
                 case "3":
                     System.out.println("View Leave Balance selected.");
+                    try (Connection conn = DatabaseConnection.getConnection()) {
+                        LeaveService leaveService = new LeaveService(conn);
+                        int leaveBalance = leaveService.getLeaveBalance(employeeEmail);
+                        System.out.println("Balance leaves: " + leaveBalance);
+                    } catch (Exception e) {
+                        System.out.println("Error in fetching leave balance " + e.getMessage());
+                    }
+                    pressEnterToContinue();
                     break;
                 case "4":
                     System.out.println("Exiting Employee Menu...");
-                    return; // Exit to main menu
+                    running = false;
+                    break;
                 default:
                     System.out.println("Invalid choice. Please try again");
             }
-            System.out.println("\nPress Enter to continue...");
-            ScannerHelper.getScanner().nextLine();
         }
+    }
+
+    private void pressEnterToContinue() {
+        System.out.println("\nPress Enter to continue...");
+        ScannerHelper.getScanner().nextLine();
     }
 }

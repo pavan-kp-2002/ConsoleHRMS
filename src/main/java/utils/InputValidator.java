@@ -3,6 +3,10 @@ package utils;
 import java.time.LocalDate;
 
 public class InputValidator {
+    public static final int MIN_LENGTH = 4;
+    public static final int MAX_LENGTH = 8;
+    public static final String EMAIL_ENDS_WITH = "@itt.com";
+
     public static boolean isValidDate(String date) {
         try {
             LocalDate.parse(date);
@@ -23,11 +27,11 @@ public class InputValidator {
     }
 
     public static boolean isValidPassword(String password) {
-        return password != null && (password.length() >= 4 && password.length() <= 8);
+        return password != null && (password.length() >= MIN_LENGTH && password.length() <= MAX_LENGTH);
     }
 
     public static boolean isValidEmail(String email) {
-        return email != null && email.endsWith("@itt.com");
+        return email != null && email.endsWith(EMAIL_ENDS_WITH);
     }
 
 }

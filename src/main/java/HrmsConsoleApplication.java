@@ -1,8 +1,8 @@
-import views.HomePage;
+import controller.HomePageController;
 
 public class HrmsConsoleApplication {
     public static void main(String[] args) {
-        HomePage homePage = new HomePage();
-        homePage.showMainMenuAndGetChoice();
+        HomePageController homePageController = new HomePageController();
+        homePageController.runHomePage();
     }
 }
